@@ -13,11 +13,11 @@
               <div class="input-group-append">
                 <span class="input-group-text"><i class="fas fa-user"></i></span>
               </div>
-              <input type="text" class="form-control" name="username" placeholder="Username" ngModel
-              #usernameInput="ngModel" required>
+              <input type="text" class="form-control" name="userName" placeholder="userName" ngModel
+              #userNameInput="ngModel" required>
             </div>
             <span class="help-block" style="color:red;"
-            *ngIf="usernameInput.invalid && usernameInput.touched">Please enter a username</span>
+            *ngIf="userNameInput.invalid && userNameInput.touched">Please enter a userName</span>
             <div class="input-group mb-2">
               <div class="input-group-append">
                 <span class="input-group-text"><i class="fas fa-key"></i></span>

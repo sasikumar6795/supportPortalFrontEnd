@@ -16,14 +16,14 @@ export class AuthenticationService {
 
   constructor(private http: HttpClient) { }
 
-  public login(user: User) : Observable<HttpResponse<any> | HttpErrorResponse> {
-    return this.http.post<HttpResponse<any> | HttpErrorResponse>
+  public login(user: User) : Observable<HttpResponse<User>>{
+    return this.http.post<User>
     // by default it just gives the body , we are expecting the whole response thats why {observer:'response}
     (`${this.host}/user/login`, user,{observe :'response'});
   }
 
-  public registerUser(user: User) : Observable<User | HttpErrorResponse> {
-    return this.http.post<User | HttpErrorResponse>
+  public registerUser(user: User) : Observable<User> {
+    return this.http.post<User>
     (`${this.host}/user/register`, user);
   }
 
