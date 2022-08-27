@@ -44,13 +44,13 @@ export class LoginComponent implements OnInit, OnDestroy {
         },
         (errorResponse:HttpErrorResponse) => {
           console.log(errorResponse);
-          this.sendNotificationError(NotificationType.ERROR, errorResponse.message);
+          this.sendNotification(NotificationType.ERROR, errorResponse.message);
         }
       )
     )
     
   }
-  private sendNotificationError(type: NotificationType, message: string) {
+  private sendNotification(type: NotificationType, message: string) {
     if(message) {
       this.notifier.showNotification(type,message);
     }else {

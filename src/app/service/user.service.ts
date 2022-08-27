@@ -58,6 +58,7 @@ export class UserService {
     formData.append('currentUserName' , loggedInUserName);
     formData.append('firstName' , user.firstName);
     formData.append('lastName' , user.lastName);
+    formData.append('userName' , user.userName);
     formData.append('email' , user.email);
     formData.append('role' , user.role);
     formData.append('profileImage' , profileImage);
