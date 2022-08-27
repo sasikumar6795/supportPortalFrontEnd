@@ -105,8 +105,21 @@ export class UserComponent implements OnInit {
     document.getElementById(buttonId).click();
   }
 
-  private searchUsers(value: any) {
-    
+  public searchUsers(searchTerm: any) {
+    let results : User[] = [];
+    for(let user of this.users) {
+      if(user.firstName.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1 ||
+      user.lastName.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1 ||
+      user.userName.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1 ||
+      user.email.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1 ||
+      user.userId.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1) {
+          results.push(user);
+      }
+    }
+    this.users = results;
+    if(results.length===0 || !searchTerm) {
+      this.users = this.userService.getUsersFromLocalCache();
+    }
   }
 
   
