@@ -8,7 +8,7 @@ import { UserComponent } from './user/user.component';
 const routes: Routes = [
   {path:'login', component: LoginComponent},
   {path:'register', component: RegisterComponent},
-  {path:'users/management', component: UserComponent},
+  {path:'users/management', component: UserComponent, canActivate: [AuthenticationGuard]},
   {path: '' , redirectTo: 'login', pathMatch: 'full'}
 ];
 

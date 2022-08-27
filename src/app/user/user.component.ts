@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from '../enum/notification-type.enum';
+import { CustomHttpResponse } from '../model/custom-http-response';
 import { User } from '../model/User';
 import { NotificationService } from '../service/notification.service';
 import { UserService } from '../service/user.service';
@@ -12,7 +13,7 @@ import { UserService } from '../service/user.service';
   templateUrl: './user.component.html',
   styleUrls: ['./user.component.css']
 })
-export class UserComponent implements OnInit {
+export class UserComponent implements OnInit, OnDestroy {
 
   titleSubject =  new BehaviorSubject<string>('users');
   //listener for the behviour subject
@@ -24,6 +25,8 @@ export class UserComponent implements OnInit {
   isAdmin : boolean = true;
   profileImage: File;
   fileName: String;
+  editUser = new User();
+  currentUserName: string;
 
   constructor(private userService: UserService, private notificationService: NotificationService) { }
 
@@ -95,7 +98,7 @@ export class UserComponent implements OnInit {
       },
       (errorResponse: HttpErrorResponse) => {
         this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-        this.refreshing=false;
+        this.profileImage=null;
       }
     )
 
@@ -122,6 +125,70 @@ export class UserComponent implements OnInit {
     }
   }
 
-  
+  public onEditUser(editUser: User) : void {
+    this.editUser = editUser;
+    // in order to remember the current username
+    this.currentUserName = editUser.userName;
+    this.clickButton('openUserEdit');
+  }
+
+  public onUpdateUser() :void {
+    const formData = this.userService.createUserFormData(this.currentUserName,this.editUser,this.profileImage);
+    this.userService.updateUser(formData).subscribe(
+      (response: User) => {
+        this.clickButton('closeEditUserModalButton');
+        this.getUsers(false);
+        this.fileName=null;
+        this.profileImage=null;
+        this.sendNotification(NotificationType.SUCCESS, 
+          `${response.firstName} ${response.lastName} user updated successfully`);
+
+      },
+      (errorResponse: HttpErrorResponse) => {
+        this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+        this.profileImage=null;
+      }
+    )
+  }
+
+  public onDeleteUser(userId: number) :void {
+
+    this.subscriptions.push(
+      this.userService.deleteUser(userId).subscribe(
+        (response: CustomHttpResponse) => {
+          this.sendNotification(NotificationType.SUCCESS, 
+            response.message);
+
+            this.getUsers(false);
+        }, 
+        (errorResponse: HttpErrorResponse) => {
+          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+        }
+      )
+    )
+
+  }
+
+  public onResetPassword(emailForm: NgForm): void {
+    const emailAddress = emailForm.value['reset-password-email'];
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.userService.resetPassword(emailAddress).subscribe(
+        (response: CustomHttpResponse) => {
+          this.sendNotification(NotificationType.SUCCESS, response.message);
+          this.refreshing = false;
+        }, 
+        (errorResponse: HttpErrorResponse) => {
+          this.sendNotification(NotificationType.WARNING, errorResponse.error.message);
+          this.refreshing = false;
+        },
+        () => emailForm.reset()
+      )
+    )
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
 
 }
