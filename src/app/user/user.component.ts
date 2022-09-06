@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from '../enum/notification-type.enum';
 import { CustomHttpResponse } from '../model/custom-http-response';
 import { User } from '../model/User';
+import { AuthenticationService } from '../service/authentication.service';
 import { NotificationService } from '../service/notification.service';
 import { UserService } from '../service/user.service';
 
@@ -19,6 +21,7 @@ export class UserComponent implements OnInit, OnDestroy {
   //listener for the behviour subject
   titleAction$ =  this.titleSubject.asObservable();
   users: User[];
+  user: User;
   refreshing : boolean;
   private subscriptions: Subscription[] =[];
   selectedUser : User;
@@ -28,9 +31,10 @@ export class UserComponent implements OnInit, OnDestroy {
   editUser = new User();
   currentUserName: string;
 
-  constructor(private userService: UserService, private notificationService: NotificationService) { }
+  constructor(private router: Router, private authenticationService: AuthenticationService, private userService: UserService, private notificationService: NotificationService) { }
 
   ngOnInit(): void {
+    this.user = this.authenticationService.getUserFromLocalCache();
     this.getUsers(false);
   }
 
@@ -132,7 +136,7 @@ export class UserComponent implements OnInit, OnDestroy {
     this.clickButton('openUserEdit');
   }
 
-  public onUpdateUser() :void {
+  public onUpdateUser(): void {
     const formData = this.userService.createUserFormData(this.currentUserName,this.editUser,this.profileImage);
     this.userService.updateUser(formData).subscribe(
       (response: User) => {
@@ -149,6 +153,31 @@ export class UserComponent implements OnInit, OnDestroy {
         this.profileImage=null;
       }
     )
+  }
+
+  public onUpdateCurrentUser(user: User): void {
+    this.currentUserName=this.authenticationService.getUserFromLocalCache().userName;
+    const formData = this.userService.createUserFormData(this.currentUserName,user,this.profileImage);
+    this.userService.updateUser(formData).subscribe(
+      (response: User) => {
+        this.authenticationService.addUserTolocalCache(response);
+        this.fileName=null;
+        this.profileImage=null;
+        this.sendNotification(NotificationType.SUCCESS, 
+          `${response.firstName} ${response.lastName} user updated successfully`);
+
+      },
+      (errorResponse: HttpErrorResponse) => {
+        this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+        this.profileImage=null;
+      }
+    )
+  }
+
+  public onLogOut(): void {
+    this.authenticationService.logOut();
+    this.router.navigate(['/login']);
+    this.sendNotification(NotificationType.SUCCESS, `You have been logged out successfully`);
   }
 
   public onDeleteUser(userId: number) :void {
