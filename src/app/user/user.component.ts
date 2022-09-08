@@ -1,10 +1,11 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from '../enum/notification-type.enum';
 import { CustomHttpResponse } from '../model/custom-http-response';
+import { FileUploadStatus } from '../model/file-upload.status';
 import { User } from '../model/User';
 import { AuthenticationService } from '../service/authentication.service';
 import { NotificationService } from '../service/notification.service';
@@ -30,6 +31,7 @@ export class UserComponent implements OnInit, OnDestroy {
   fileName: String;
   editUser = new User();
   currentUserName: string;
+  fileStatus = new FileUploadStatus();
 
   constructor(private router: Router, private authenticationService: AuthenticationService, private userService: UserService, private notificationService: NotificationService) { }
 
@@ -178,6 +180,50 @@ export class UserComponent implements OnInit, OnDestroy {
     this.authenticationService.logOut();
     this.router.navigate(['/login']);
     this.sendNotification(NotificationType.SUCCESS, `You have been logged out successfully`);
+  }
+
+  public updateProfileImage(): void {
+    this.clickButton('profile-image-input');
+  }
+
+  public onUpdateProfileImage(): void {
+    const formData =  new FormData();
+    formData.append('userName', this.currentUserName);
+    formData.append('profileImage', this.profileImage);
+    this.userService.updateProfileImage(formData).subscribe(
+      (event: HttpEvent<User>) => {
+        this.reportUploadProgress(event);
+      },
+      (errorResponse: HttpErrorResponse) => {
+        this.fileStatus.status = 'done';
+        this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+      }
+    );
+  }
+
+  private reportUploadProgress(event: HttpEvent<User>) {
+
+    switch(event.type) {
+      case HttpEventType.UploadProgress:
+        this.fileStatus.percentage = Math.round(100 * event.loaded/event.total);
+        this.fileStatus.status = 'progress';
+        break;
+      case HttpEventType.Response:
+        if(event.status === 200) {
+          this.user.profileImageUrl = `${event.body.profileImageUrl}?time=${new Date().getTime()}`;
+          this.sendNotification(NotificationType.SUCCESS, 
+            `${event.body.firstName} \'s profile image updated successfully`);
+            this.fileStatus.status = 'done';
+            break;
+        } else {
+          this.sendNotification(NotificationType.ERROR, 
+            `unable to upload image please try again`);
+          break;
+        }
+      default:
+        break;
+    }
+    
   }
 
   public onDeleteUser(userId: number) :void {
