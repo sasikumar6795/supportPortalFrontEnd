@@ -4,6 +4,7 @@ import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from '../enum/notification-type.enum';
+import { Role } from '../enum/role.enum';
 import { CustomHttpResponse } from '../model/custom-http-response';
 import { FileUploadStatus } from '../model/file-upload.status';
 import { User } from '../model/User';
@@ -26,7 +27,6 @@ export class UserComponent implements OnInit, OnDestroy {
   refreshing : boolean;
   private subscriptions: Subscription[] =[];
   selectedUser : User;
-  isAdmin : boolean = true;
   profileImage: File;
   fileName: String;
   editUser = new User();
@@ -63,6 +63,22 @@ export class UserComponent implements OnInit, OnDestroy {
         }
       )
     )
+  }
+
+  public get isAdmin(): boolean {
+    return this.getUserRole() === Role.ADMIN || this.getUserRole() ===   Role.SUPER_ADMIN;
+  }
+
+  public get isManager(): boolean {
+    return this.isAdmin || this.getUserRole() ===   Role.MANAGER;
+  }
+
+  public get isAdminOrManager(): boolean {
+    return this.isAdmin || this.isManager;
+  }
+
+  private getUserRole() : String {
+    return this.authenticationService.getUserFromLocalCache().role;
   }
 
   private sendNotification(type: NotificationType, message: string) {
